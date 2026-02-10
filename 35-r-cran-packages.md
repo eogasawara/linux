@@ -369,7 +369,7 @@ yes | wajig install r-cran-dlstats
 yes | wajig install r-cran-censobr
 yes | wajig install r-cran-sidrar
 yes | wajig install r-cran-fitdistrplus
-
+yes | wajig install r-cran-adabag
 
 # limpar as pastas de componentes instalados sem aviso
 ./clean-r.sh
