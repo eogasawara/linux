@@ -16,6 +16,7 @@ Portas usadas:
 - RStudio Server: 8787 (localhost)
 - code-server: 8081 (localhost)
 - Jupyter: 8888 (opcional)
+
 Producao:
 - Tomcat: 8080 (localhost)
 - Squid: 3128
