@@ -21,6 +21,7 @@ yes | wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc
 yes | sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
 ```
 # install R itself
+```bash
 yes | sudo apt install --no-install-recommends r-base
 ```
 
