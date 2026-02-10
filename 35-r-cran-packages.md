@@ -3,38 +3,50 @@
 # Este arquivo preserva a lista longa de pacotes r-cran-*.
 #
 # atualizar indices
+```bash
 yes | sudo apt update -qq
+```
 # install two helper packages we need
+```bash
 yes | sudo apt install --no-install-recommends software-properties-common dirmngr
+```
 # add the signing key (by Michael Rutter) for these repos
 # To verify key, run gpg --show-keys /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc 
 # Fingerprint: E298A3A825C0D65DFD57CBB651716619E084DAB9
+```bash
 yes | wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
+```
 # add the repo from CRAN for Ubuntu 24 (noble)
+```bash
 yes | sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+```
 # install R itself
 yes | sudo apt install --no-install-recommends r-base
+```
 
 #https://cran.r-project.org/bin/linux/ubuntu/fullREADME.html
 
 #https://github.com/eddelbuettel/r2u
 
 #step #1
+```bash
 yes | apt update -qq && apt install --yes --no-install-recommends wget \
     ca-certificates gnupg
 yes | wget -q -O- https://eddelbuettel.github.io/r2u/assets/dirk_eddelbuettel_key.asc \
     | tee -a /etc/apt/trusted.gpg.d/cranapt_key.asc
+```
 
 #step #2 - noble #ubuntu 24
+```bash
 echo "deb [arch=amd64] https://r2u.stat.illinois.edu/ubuntu noble main" \
      > /etc/apt/sources.list.d/cranapt.list
 yes | apt update -qq
+```
 
-
+```bash
 yes | apt-get update
 yes | apt-get install r-base r-base-dev
 yes | apt-get install libgsl-dev
-
 
 yes | apt-get install libgdal-dev libproj-dev
 yes | apt-get install wajig
@@ -48,7 +60,9 @@ yes | wajig install-suggested r-recommended
 yes | wajig install cargo 
 yes | wajig install ffmpeg
 yes | wajig install libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+```
 
+```bash
 yes | wajig install r-cran-aer
 yes | wajig install r-cran-amap
 yes | wajig install r-cran-amelia
@@ -252,7 +266,9 @@ yes | wajig install r-cran-xopen
 yes | wajig install r-cran-xtable
 yes | wajig install r-cran-zeallot
 yes | wajig install r-cran-zip
+```
 
+```bash
 yes | wajig install r-cran-anomalize
 yes | wajig install r-cran-arrow
 yes | wajig install r-cran-arules
@@ -352,29 +368,36 @@ yes | wajig install r-cran-wvplots
 yes | wajig install r-cran-xlconnect
 yes | wajig install r-cran-xlsx
 yes | wajig install r-cran-xlsxjars
+```
 
+```bash
 yes | wajig install r-cran-countrycode
 yes | wajig install r-cran-packagerank
 yes | wajig install r-cran-dlstats
+```
 
-
+```bash
 #yes | wajig install r-cran-daltoolbox
 #yes | wajig install r-cran-daltoolboxdp
 #yes | wajig install r-cran-harbinger
 #yes | wajig install r-cran-tspredit
 #yes | wajig install r-cran-stmotif
+```
 
 
 ### novos pacotes
+```bash
 yes | wajig install r-cran-censobr
 yes | wajig install r-cran-sidrar
 yes | wajig install r-cran-fitdistrplus
 yes | wajig install r-cran-adabag
+```
 
 # limpar as pastas de componentes instalados sem aviso
+```bash
 ./clean-r.sh
+```
 
 #apt search r-cran- | grep -in "^r-cran-"
-
 # Referencias:
 # - https://cran.r-project.org/
