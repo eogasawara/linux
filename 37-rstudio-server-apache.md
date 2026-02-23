@@ -7,7 +7,7 @@ yes | apt-get install gdebi-core
 
 Baixar e instalar (Ubuntu 24 LTS):
 ```bash
-RSTUDIO_DEB_URL="https://download2.rstudio.org/server/jammy/amd64/rstudio-server-2026.01.1-403-amd64.deb
+RSTUDIO_DEB_URL="https://download2.rstudio.org/server/jammy/amd64/rstudio-server-2026.01.1-403-amd64.deb"
 
 # Verifique no site da Posit se existe versao mais nova.
 yes | wget "$RSTUDIO_DEB_URL" -O rstudio-server.deb
@@ -38,4 +38,5 @@ service apache2 restart
 
 Referencia:
 - https://posit.co/download/rstudio-server/
+
 
