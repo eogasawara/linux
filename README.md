@@ -18,6 +18,7 @@ Servidor de desenvolvimento / ciencia de dados (30+):
 - 35-r-cran-packages.md
 - 36-r-python-integration.md
 - 37-rstudio-server-apache.md
+- 38-jupyterhub-apache.md
 - 39-code-server.md
 - 42-git-and-github-dev.md
 

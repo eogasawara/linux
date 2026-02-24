@@ -14,6 +14,13 @@ yes | wget "$RSTUDIO_DEB_URL" -O rstudio-server.deb
 yes | gdebi rstudio-server.deb
 ```
 
+Configurar subpath no RStudio Server (`/etc/rstudio/rserver.conf`):
+```ini
+www-root-path=/rstudio
+www-address=127.0.0.1
+www-port=8787
+```
+
 Proxy reverso no Apache (`/etc/apache2/sites-available/000-default-le-ssl.conf`):
 ```apache
 RedirectMatch permanent ^/rstudio$ /rstudio/
