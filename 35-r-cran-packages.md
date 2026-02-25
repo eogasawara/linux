@@ -267,9 +267,6 @@ yes | wajig install r-cran-xopen
 yes | wajig install r-cran-xtable
 yes | wajig install r-cran-zeallot
 yes | wajig install r-cran-zip
-```
-
-```bash
 yes | wajig install r-cran-anomalize
 yes | wajig install r-cran-arrow
 yes | wajig install r-cran-arules
@@ -369,9 +366,6 @@ yes | wajig install r-cran-wvplots
 yes | wajig install r-cran-xlconnect
 yes | wajig install r-cran-xlsx
 yes | wajig install r-cran-xlsxjars
-```
-
-```bash
 yes | wajig install r-cran-countrycode
 yes | wajig install r-cran-packagerank
 yes | wajig install r-cran-dlstats
