@@ -45,10 +45,10 @@ pip install torchaudio
 pip install train
 pip install db-dtypes
 pip install early-stopping
-pip show torch-geometric > /dev/null 2>&1 || pip install torch-geometric
-pip show pytorch_lightning > /dev/null 2>&1 || pip install pytorch_lightning
-pip show gluonts > /dev/null 2>&1 || pip install gluonts
-pip show pyreadr > /dev/null 2>&1 || pip install pyreadr
+pip install torch-geometric
+pip install pytorch_lightning
+pip install gluonts
+pip install pyreadr
 ```
 
 Finalizar:
