@@ -37,9 +37,14 @@ Gerar config por usuario:
 Rscript scripts/code-server-user-bootstrap.R
 ```
 
+Regra de porta por usuario:
+```text
+PORTA = UID_LINUX + 8000
+```
+
 Cada usuario deve ter `~/.config/code-server/config.yaml` com este padrao:
 ```yaml
-bind-addr: 127.0.0.1:<PORTA_UNICA>
+bind-addr: 127.0.0.1:<UID+8000>
 auth: password
 password: <PASSWORD_DO_USUARIO>
 cert: false
@@ -75,8 +80,11 @@ sudo systemctl status code-server@bob --no-pager
 
 Arquivo de mapeamento usuario -> porta em `/etc/apache2/code-server-users.map`:
 ```text
-alice 8081
-bob 8082
+# Exemplo:
+# alice UID=1001 -> porta 9001
+# bob   UID=1002 -> porta 9002
+alice 9001
+bob 9002
 ```
 
 Apache: habilitar modulos necessarios:
@@ -122,8 +130,8 @@ sudo systemctl restart apache2
 Testes:
 ```bash
 # Local no servidor (deve responder 200/302)
-curl -I http://127.0.0.1:8081/
-curl -I http://127.0.0.1:8082/
+curl -I http://127.0.0.1:9001/
+curl -I http://127.0.0.1:9002/
 ```
 
 Abrir no navegador:
@@ -133,7 +141,7 @@ https://<host>/code/bob/
 ```
 
 Operacao:
-- Para adicionar usuario novo: criar `config.yaml`, escolher porta livre, subir `code-server@<usuario>`, incluir no `code-server-users.map`, reiniciar Apache.
+- Para adicionar usuario novo: obter UID, calcular `porta = UID + 8000`, criar `config.yaml`, subir `code-server@<usuario>`, incluir no `code-server-users.map`, reiniciar Apache.
 - Se houver erro de assets/rotas, confira `base-path` no `config.yaml` do usuario.
 
 Referencia:

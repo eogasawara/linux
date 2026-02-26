@@ -78,8 +78,6 @@ setup_rstudio <- function(login) {
 
 folders <- list.dirs(path = "/home", full.names = FALSE, recursive = FALSE)
 folders <- sort(folders)
-port_base <- 8081
-idx <- 0
 for (login in folders) {
   id <- as.integer(system2("id", args = c("-u", login), stdout = TRUE, stderr = TRUE))
   if (!is.na(id)) {
@@ -90,10 +88,9 @@ for (login in folders) {
         if (!dir.exists(sprintf("/home/%s/.config/code-server", login)))
           cmd <- system2("mkdir", args = c(sprintf("/home/%s/.config/code-server", login)), stdout = TRUE, stderr = TRUE)
         password <- "<PASSWORD>"
-        port <- port_base + idx
+        port <- id + 8000
         create_config_file(login, password, port)
         create_readme_file(login, password, port)
-        idx <- idx + 1
       },
       error=function(cond) {
         message(cond) 

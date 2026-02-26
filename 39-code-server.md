@@ -18,7 +18,7 @@ vi ~/.config/code-server/config.yaml
 
 Exemplo:
 ```yaml
-bind-addr: 127.0.0.1:8081
+bind-addr: 127.0.0.1:<PORTA_UNICA>
 auth: password
 password: <PASSWORD>
 cert: false
@@ -26,7 +26,7 @@ cert: false
 
 Tunel SSH (cliente):
 ```bash
-ssh -L 8081:127.0.0.1:8081 foo@server.instituicao.exemplo
+ssh -L <PORTA_UNICA>:127.0.0.1:<PORTA_UNICA> foo@server.instituicao.exemplo
 ```
 
 Iniciar:
