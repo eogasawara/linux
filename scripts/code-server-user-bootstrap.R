@@ -18,8 +18,7 @@ create_config_file <- function(login, id) {
   fileConn<-file(sprintf("%s/config.yaml", filename))
   writeLines(c(sprintf("bind-addr: 127.0.0.1:%d", id),
                "auth: none",
-               "cert: false",
-               sprintf("base-path: /code/%s", login)), fileConn)
+               "cert: false"), fileConn)
   close(fileConn)
 }
 
@@ -44,7 +43,7 @@ create_readme_file <- function(login, id) {
   filename <- sprintf("/home/%s/readme-code-server.txt", login)
   cmd <- system2("rm", args=c(filename), stdout = TRUE, stderr = TRUE)
   fileConn<-file(filename)
-  writeLines(c(sprintf("url publica: https://%s.instituicao.exemplo/code/%s/", hostname, login),
+  writeLines(c(sprintf("url publica: https://%s.instituicao.exemplo:8080/", hostname),
                "#login no Apache com usuario/senha Linux (PAM)",
                "#opcional: acesso local por tunel SSH",
                sprintf("ssh -L %d:127.0.0.1:%d %s@%s.instituicao.exemplo", id, id, login, hostname)), fileConn)

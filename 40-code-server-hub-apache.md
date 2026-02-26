@@ -1,13 +1,14 @@
-code-server multiusuario (estilo hub) atras do Apache HTTPS.
+code-server multiusuario (estilo hub) atras do Apache HTTPS em porta dedicada.
 
 Objetivo:
-- Comportamento analogo ao JupyterHub publicado em subpath.
+- Comportamento analogo ao JupyterHub no login central (PAM).
 - Um processo `code-server` por usuario Linux.
-- Acesso em `https://<host>/code/<usuario>/`.
+- Entrada publica unica: `https://<host>:8080/`.
 
 Limite importante:
-- Diferente do JupyterHub, o code-server nao tem "hub" nativo com PAM + spawn central.
-- Neste modelo, a autenticacao PAM ocorre no Apache (usuario Linux), e o code-server fica com `auth: none`.
+- O code-server nao tem "hub" nativo com PAM + spawn central.
+- Neste modelo, a autenticacao PAM ocorre no Apache (usuario Linux).
+- Com code-server `4.109.2`, nao usar `base-path` no `config.yaml`.
 
 Dependencias:
 ```bash
@@ -33,7 +34,7 @@ code-server --version
 
 Regra de porta por usuario:
 ```text
-PORTA = UID_LINUX + 8000
+PORTA_INTERNA = UID_LINUX + 8000
 ```
 
 Cada usuario deve ter `~/.config/code-server/config.yaml` com este padrao:
@@ -41,7 +42,6 @@ Cada usuario deve ter `~/.config/code-server/config.yaml` com este padrao:
 bind-addr: 127.0.0.1:<UID+8000>
 auth: none
 cert: false
-base-path: /code/<USUARIO>
 ```
 
 Criar servico systemd template em `/etc/systemd/system/code-server@.service`:
@@ -79,8 +79,8 @@ Ao executar o script acima (ou `code-server.R`), ele:
 
 Checagem rapida dos servicos:
 ```bash
-sudo systemctl status code-server@alice --no-pager
-sudo systemctl status code-server@bob --no-pager
+sudo systemctl status code-server@gpca --no-pager
+sudo systemctl status code-server@eogasawara --no-pager
 ```
 
 Arquivo de mapeamento usuario -> porta em `/etc/apache2/code-server-users.map`:
@@ -88,10 +88,10 @@ Arquivo de mapeamento usuario -> porta em `/etc/apache2/code-server-users.map`:
 - Formato esperado:
 ```text
 # Exemplo:
-# alice UID=1001 -> porta 9001
-# bob   UID=1002 -> porta 9002
-alice 9001
-bob 9002
+# gpca UID=1000 -> porta 9000
+# eogasawara UID=1002 -> porta 9002
+gpca 9000
+eogasawara 9002
 ```
 
 Apache: habilitar modulos necessarios:
@@ -99,7 +99,11 @@ Apache: habilitar modulos necessarios:
 sudo apt install -y libapache2-mod-authnz-pam
 sudo a2enmod proxy proxy_http proxy_wstunnel rewrite headers ssl
 sudo a2enmod authnz_pam auth_basic
-sudo systemctl reload apache2
+```
+
+Apache: habilitar porta 8080 com TLS (`/etc/apache2/ports.conf`):
+```apache
+Listen 8080
 ```
 
 Servico PAM do Apache (`/etc/pam.d/apache2`):
@@ -108,46 +112,54 @@ auth    required  pam_unix.so
 account required  pam_unix.so
 ```
 
-Adicionar no VirtualHost SSL (`/etc/apache2/sites-available/000-default-le-ssl.conf`):
+Adicionar VirtualHost em `:8080` (`/etc/apache2/sites-available/code-server-hub-8080.conf`):
 ```apache
-# begin code-server hub
-RewriteEngine On
-RewriteMap csusers txt:/etc/apache2/code-server-users.map
+<IfModule mod_ssl.c>
+<VirtualHost *:8080>
+    ServerName albali.eic.cefet-rj.br
 
-# autentica em PAM e garante que /code/<user>/ so aceite o proprio user
-<LocationMatch "^/code/(?<user>[^/]+)/">
-    AuthType Basic
-    AuthName "code-server"
-    AuthBasicProvider PAM
-    AuthPAMService apache2
-    Require valid-user
-    Require expr %{REMOTE_USER} == %{env:MATCH_USER}
-</LocationMatch>
+    RewriteEngine On
+    RewriteMap csusers txt:/etc/apache2/code-server-users.map
 
-# /code/<user> -> /code/<user>/
-RewriteRule ^/code/([^/]+)$ /code/$1/ [R=301,L]
+    # Login Linux via PAM
+    <Location />
+        AuthType Basic
+        AuthName "code-server"
+        AuthBasicProvider PAM
+        AuthPAMService apache2
+        Require valid-user
+    </Location>
 
-# websocket
-RewriteCond %{REQUEST_URI} ^/code/([^/]+)/(.*)$ [NC]
-RewriteCond ${csusers:%1|NOTFOUND} !NOTFOUND
-RewriteCond %{HTTP:Upgrade} =websocket [NC]
-RewriteRule ^/code/([^/]+)/(.*)$ ws://127.0.0.1:${csusers:$1}/$2 [P,L]
+    # Bloqueia usuario sem entrada no mapa
+    RewriteCond %{LA-U:REMOTE_USER} (.+)
+    RewriteCond ${csusers:%1|NOTFOUND} =NOTFOUND
+    RewriteRule ^ - [F,L]
 
-# http
-RewriteCond %{REQUEST_URI} ^/code/([^/]+)/(.*)$ [NC]
-RewriteCond ${csusers:%1|NOTFOUND} !NOTFOUND
-RewriteCond %{HTTP:Upgrade} !=websocket [NC]
-RewriteRule ^/code/([^/]+)/(.*)$ http://127.0.0.1:${csusers:$1}/$2 [P,L]
+    # websocket
+    RewriteCond %{LA-U:REMOTE_USER} (.+)
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule ^/(.*)$ ws://127.0.0.1:${csusers:%1}/$1 [P,L]
 
-ProxyPreserveHost On
-RequestHeader set X-Forwarded-Proto "https"
-RequestHeader set X-Forwarded-Port "443"
-ProxyTimeout 600
-# end code-server hub
+    # http
+    RewriteCond %{LA-U:REMOTE_USER} (.+)
+    RewriteCond %{HTTP:Upgrade} !=websocket [NC]
+    RewriteRule ^/(.*)$ http://127.0.0.1:${csusers:%1}/$1 [P,L]
+
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port "8080"
+    ProxyTimeout 600
+
+    SSLCertificateFile /etc/letsencrypt/live/albali.eic.cefet-rj.br/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/albali.eic.cefet-rj.br/privkey.pem
+    Include /etc/letsencrypt/options-ssl-apache.conf
+</VirtualHost>
+</IfModule>
 ```
 
-Validar e reiniciar Apache:
+Ativar site e reiniciar Apache:
 ```bash
+sudo a2ensite code-server-hub-8080.conf
 sudo apache2ctl configtest
 sudo systemctl restart apache2
 ```
@@ -155,25 +167,19 @@ sudo systemctl restart apache2
 Testes:
 ```bash
 # Local no servidor (deve responder 200/302)
-curl -I http://127.0.0.1:9001/
+curl -I http://127.0.0.1:9000/
 curl -I http://127.0.0.1:9002/
-```
-
-Teste de autorizacao:
-```text
-1) logar como alice e abrir /code/alice/ (deve funcionar)
-2) logar como alice e abrir /code/bob/ (deve retornar 403)
 ```
 
 Abrir no navegador:
 ```text
-https://<host>/code/alice/
-https://<host>/code/bob/
+https://albali.eic.cefet-rj.br:8080/
 ```
 
 Operacao:
-- Para adicionar usuario novo: obter UID, calcular `porta = UID + 8000`, criar `config.yaml`, subir `code-server@<usuario>`, atualizar `code-server-users.map` (manual ou reexecutando o script), reiniciar Apache.
-- Se houver erro de assets/rotas, confira `base-path` no `config.yaml` do usuario.
+- Para adicionar usuario novo: criar usuario Linux, rodar o script novamente, reiniciar Apache.
+- O roteamento interno continua por `UID + 8000`.
+- Se um usuario autenticar e nao existir no `code-server-users.map`, Apache responde 403.
 
 Referencia:
 - https://coder.com/docs/code-server/latest
