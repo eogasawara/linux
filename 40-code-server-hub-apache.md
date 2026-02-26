@@ -1,9 +1,13 @@
 code-server multiusuario (estilo hub) atras do Apache HTTPS em porta dedicada.
 
+Nota de seguranca:
+- Este documento usa placeholders. Substitua `<HOST_FQDN>` e `<USUARIO*>` antes de aplicar.
+- Nao publique nomes reais de host/usuarios em documentacao compartilhada.
+
 Objetivo:
 - Comportamento analogo ao JupyterHub no login central (PAM).
 - Um processo `code-server` por usuario Linux.
-- Entrada publica em subpath: `https://<host>/code/`.
+- Entrada publica em subpath: `https://<HOST_FQDN>/code/`.
 
 Limite importante:
 - O code-server nao tem "hub" nativo com PAM + spawn central.
@@ -70,6 +74,7 @@ sudo systemctl daemon-reload
 
 Gerar config por usuario e subir servicos:
 ```bash
+# Antes: ajuste `<HOST_FQDN>` nos scripts (get_public_host)
 sudo Rscript scripts/code-server-user-bootstrap.R
 ```
 
@@ -80,8 +85,8 @@ Ao executar o script acima (ou `code-server.R`), ele:
 
 Checagem rapida dos servicos:
 ```bash
-sudo systemctl status code-server@gpca --no-pager
-sudo systemctl status code-server@eogasawara --no-pager
+sudo systemctl status code-server@<USUARIO1> --no-pager
+sudo systemctl status code-server@<USUARIO2> --no-pager
 ```
 
 Arquivo de mapeamento usuario -> porta em `/etc/apache2/code-server-users.map`:
@@ -89,10 +94,10 @@ Arquivo de mapeamento usuario -> porta em `/etc/apache2/code-server-users.map`:
 - Formato esperado:
 ```text
 # Exemplo:
-# gpca UID=1000 -> porta 9001
-# eogasawara UID=1002 -> porta 9003
-gpca 9001
-eogasawara 9003
+# <USUARIO1> UID=1000 -> porta 9001
+# <USUARIO2> UID=1002 -> porta 9003
+<USUARIO1> 9001
+<USUARIO2> 9003
 ```
 
 Apache: habilitar modulos necessarios:
@@ -121,7 +126,7 @@ sudo usermod -aG shadow www-data
 Adicionar VirtualHost interno em `:9000` (`/etc/apache2/sites-available/code-server-hub-9000.conf`):
 ```apache
 <VirtualHost 127.0.0.1:9000>
-    ServerName albali.eic.cefet-rj.br
+    ServerName <HOST_FQDN>
 
     RewriteEngine On
     RewriteMap csusers txt:/etc/apache2/code-server-users.map
@@ -192,7 +197,7 @@ curl -I http://127.0.0.1:9003/
 
 Abrir no navegador:
 ```text
-https://albali.eic.cefet-rj.br/code/
+https://<HOST_FQDN>/code/
 ```
 
 Operacao:

@@ -1,7 +1,7 @@
 # Configura code-server e preferencias do RStudio por usuario.
-get_hostname <- function(){ 
-  return(as.character(Sys.info()["nodename"])) 
-} 
+get_public_host <- function() {
+  return("<HOST_FQDN>")
+}
 
 create_rprofile <- function(login) {
   filename <- sprintf("/home/%s/.Rprofile", login)
@@ -38,15 +38,39 @@ enable_code_server_service <- function(login) {
   cmd <- system2("systemctl", args = c("enable", "--now", unit), stdout = TRUE, stderr = TRUE)
 }
 
-create_readme_file <- function(login, id) {
-  hostname <- get_hostname()
+create_readme_proxy <- function(login, id) {
+  host_fqdn <- get_public_host()
+  filename <- sprintf("/home/%s/readme-proxy.txt", login)
+  cmd <- system2("rm", args=c(filename), stdout = TRUE, stderr = TRUE)
+  fileConn<-file(filename)
+  writeLines(c(sprintf("ssh -p <PORTA_SSH> -L %d:127.0.0.1:%d %s@%s", id, id, login, host_fqdn),
+               "#estabele o tunel entre tua maquina e o servidor na porta indicada",
+               sprintf("#uma vez logado, basta configurar o proxy no Firefox para 127.0.0.1 porta %d", id)), fileConn)
+  close(fileConn)
+  cmd <- system2("chown", args = c("-R",sprintf("%s:%s", login, login), filename), stdout = TRUE, stderr = TRUE)
+}
+
+create_readme_code_server <- function(login, id) {
+  host_fqdn <- get_public_host()
   filename <- sprintf("/home/%s/readme-code-server.txt", login)
   cmd <- system2("rm", args=c(filename), stdout = TRUE, stderr = TRUE)
   fileConn<-file(filename)
-  writeLines(c(sprintf("url publica: https://%s.instituicao.exemplo:8080/", hostname),
+  writeLines(c(sprintf("url publica: https://%s/code/", host_fqdn),
                "#login no Apache com usuario/senha Linux (PAM)",
                "#opcional: acesso local por tunel SSH",
-               sprintf("ssh -L %d:127.0.0.1:%d %s@%s.instituicao.exemplo", id, id, login, hostname)), fileConn)
+               sprintf("ssh -p <PORTA_SSH> -L %d:127.0.0.1:%d %s@%s", id, id, login, host_fqdn)), fileConn)
+  close(fileConn)
+  cmd <- system2("chown", args = c("-R",sprintf("%s:%s", login, login), filename), stdout = TRUE, stderr = TRUE)
+}
+
+create_readme_jupyter <- function(login, id) {
+  host_fqdn <- get_public_host()
+  filename <- sprintf("/home/%s/readme-jupyter.txt", login)
+  cmd <- system2("rm", args=c(filename), stdout = TRUE, stderr = TRUE)
+  fileConn<-file(filename)
+  writeLines(c(sprintf("ssh -p <PORTA_SSH> -L %d:127.0.0.1:%d %s@%s", id, id, login, host_fqdn),
+               "#estabele o tunel entre tua maquina e o servidor na porta indicada",
+               sprintf("#uma vez logado, basta rodar jupyter notebook --port %d, obter a url produzida e acessa-lo pelo browser", id)), fileConn)
   close(fileConn)
   cmd <- system2("chown", args = c("-R",sprintf("%s:%s", login, login), filename), stdout = TRUE, stderr = TRUE)
 }
@@ -71,17 +95,23 @@ setup_rstudio <- function(login) {
     }
   ) 
   
+  library(reticulate)
+  py <- py_discover_config()
+  
   modify <- FALSE
   if (is.null(json_result$python_type)) {
     json_result$python_type <- "system"
     modify <- TRUE  
   }
   if (is.null(json_result$python_version)){
-    json_result$python_version <- "3.8.10"
+    r <- strsplit(py$version_string, " ")
+    json_result$python_version <- r[[1]][1]
+    #json_result$python_version <- "3.8.10"
     modify <- TRUE  
   }
   if (is.null(json_result$python_path)){
-    json_result$python_path <- "/usr/bin/python3.8"
+    #json_result$python_path <- "/usr/bin/python3.8"
+    json_result$python_path <- py$executable
     modify <- TRUE  
   }
   if (modify) {
@@ -91,7 +121,6 @@ setup_rstudio <- function(login) {
 }
 
 folders <- list.dirs(path = "/home", full.names = FALSE, recursive = FALSE)
-folders <- sort(folders)
 users_map_entries <- c()
 for (login in folders) {
   id <- as.integer(system2("id", args = c("-u", login), stdout = TRUE, stderr = TRUE))
@@ -104,7 +133,9 @@ for (login in folders) {
           cmd <- system2("mkdir", args = c(sprintf("/home/%s/.config/code-server", login)), stdout = TRUE, stderr = TRUE)
         port <- id + 8001
         create_config_file(login, port)
-        create_readme_file(login, port)
+        create_readme_code_server(login, port) 
+        create_readme_jupyter(login, id+9000) 
+        create_readme_proxy(login, 31280)
         users_map_entries <<- c(users_map_entries, sprintf("%s %d", login, port))
         enable_code_server_service(login)
       },
