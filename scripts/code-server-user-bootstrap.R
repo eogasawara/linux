@@ -102,7 +102,7 @@ for (login in folders) {
           cmd <- system2("mkdir", args = c(sprintf("/home/%s/.config", login)), stdout = TRUE, stderr = TRUE)
         if (!dir.exists(sprintf("/home/%s/.config/code-server", login)))
           cmd <- system2("mkdir", args = c(sprintf("/home/%s/.config/code-server", login)), stdout = TRUE, stderr = TRUE)
-        port <- id + 8000
+        port <- id + 8001
         create_config_file(login, port)
         create_readme_file(login, port)
         users_map_entries <<- c(users_map_entries, sprintf("%s %d", login, port))

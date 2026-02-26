@@ -3,7 +3,7 @@ code-server multiusuario (estilo hub) atras do Apache HTTPS em porta dedicada.
 Objetivo:
 - Comportamento analogo ao JupyterHub no login central (PAM).
 - Um processo `code-server` por usuario Linux.
-- Entrada publica unica: `https://<host>:8080/`.
+- Entrada publica em subpath: `https://<host>/code/`.
 
 Limite importante:
 - O code-server nao tem "hub" nativo com PAM + spawn central.
@@ -34,12 +34,13 @@ code-server --version
 
 Regra de porta por usuario:
 ```text
-PORTA_INTERNA = UID_LINUX + 8000
+PORTA_INTERNA_USUARIO = UID_LINUX + 8001
+# 9000 reservado para o Apache interno do hub
 ```
 
 Cada usuario deve ter `~/.config/code-server/config.yaml` com este padrao:
 ```yaml
-bind-addr: 127.0.0.1:<UID+8000>
+bind-addr: 127.0.0.1:<UID+8001>
 auth: none
 cert: false
 ```
@@ -88,10 +89,10 @@ Arquivo de mapeamento usuario -> porta em `/etc/apache2/code-server-users.map`:
 - Formato esperado:
 ```text
 # Exemplo:
-# gpca UID=1000 -> porta 9000
-# eogasawara UID=1002 -> porta 9002
-gpca 9000
-eogasawara 9002
+# gpca UID=1000 -> porta 9001
+# eogasawara UID=1002 -> porta 9003
+gpca 9001
+eogasawara 9003
 ```
 
 Apache: habilitar modulos necessarios:
@@ -101,21 +102,26 @@ sudo a2enmod proxy proxy_http proxy_wstunnel rewrite headers ssl
 sudo a2enmod authnz_pam auth_basic
 ```
 
-Apache: habilitar porta 8080 com TLS (`/etc/apache2/ports.conf`):
+Apache interno do hub: habilitar porta local 9000 (`/etc/apache2/ports.conf`):
 ```apache
-Listen 8080
+Listen 127.0.0.1:9000
 ```
 
 Servico PAM do Apache (`/etc/pam.d/apache2`):
 ```text
-auth    required  pam_unix.so
-account required  pam_unix.so
+auth    include common-auth
+account include common-account
 ```
 
-Adicionar VirtualHost em `:8080` (`/etc/apache2/sites-available/code-server-hub-8080.conf`):
+Permitir leitura de autenticacao local para o Apache:
+```bash
+sudo usermod -aG shadow www-data
+```
+
+Adicionar VirtualHost interno em `:9000` (`/etc/apache2/sites-available/code-server-hub-9000.conf`):
 ```apache
 <IfModule mod_ssl.c>
-<VirtualHost *:8080>
+<VirtualHost 127.0.0.1:9000>
     ServerName albali.eic.cefet-rj.br
 
     RewriteEngine On
@@ -147,7 +153,7 @@ Adicionar VirtualHost em `:8080` (`/etc/apache2/sites-available/code-server-hub-
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto "https"
-    RequestHeader set X-Forwarded-Port "8080"
+    RequestHeader set X-Forwarded-Port "443"
     ProxyTimeout 600
 
     SSLCertificateFile /etc/letsencrypt/live/albali.eic.cefet-rj.br/fullchain.pem
@@ -157,9 +163,25 @@ Adicionar VirtualHost em `:8080` (`/etc/apache2/sites-available/code-server-hub-
 </IfModule>
 ```
 
-Ativar site e reiniciar Apache:
+No VirtualHost HTTPS publico (`/etc/apache2/sites-available/000-default-le-ssl.conf`), adicionar proxy de subpath:
+```apache
+# begin code-server front
+RedirectMatch permanent ^/code$ /code/
+
+RewriteEngine On
+RewriteCond %{HTTP:Upgrade} =websocket [NC]
+RewriteRule ^/code/(.*)$ ws://127.0.0.1:9000/$1 [P,L]
+RewriteCond %{HTTP:Upgrade} !=websocket [NC]
+RewriteRule ^/code/(.*)$ http://127.0.0.1:9000/$1 [P,L]
+
+ProxyPass /code/ http://127.0.0.1:9000/
+ProxyPassReverse /code/ http://127.0.0.1:9000/
+# end code-server front
+```
+
+Ativar site interno e reiniciar Apache:
 ```bash
-sudo a2ensite code-server-hub-8080.conf
+sudo a2ensite code-server-hub-9000.conf
 sudo apache2ctl configtest
 sudo systemctl restart apache2
 ```
@@ -167,18 +189,18 @@ sudo systemctl restart apache2
 Testes:
 ```bash
 # Local no servidor (deve responder 200/302)
-curl -I http://127.0.0.1:9000/
-curl -I http://127.0.0.1:9002/
+curl -I http://127.0.0.1:9001/
+curl -I http://127.0.0.1:9003/
 ```
 
 Abrir no navegador:
 ```text
-https://albali.eic.cefet-rj.br:8080/
+https://albali.eic.cefet-rj.br/code/
 ```
 
 Operacao:
 - Para adicionar usuario novo: criar usuario Linux, rodar o script novamente, reiniciar Apache.
-- O roteamento interno continua por `UID + 8000`.
+- O roteamento interno continua por `UID + 8001` (com `9000` reservado para o hub interno).
 - Se um usuario autenticar e nao existir no `code-server-users.map`, Apache responde 403.
 
 Referencia:
