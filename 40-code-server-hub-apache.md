@@ -7,7 +7,7 @@ Objetivo:
 
 Limite importante:
 - Diferente do JupyterHub, o code-server nao tem "hub" nativo com PAM + spawn central.
-- Neste modelo, cada usuario autentica no proprio code-server (senha no `config.yaml` de cada usuario).
+- Neste modelo, a autenticacao PAM ocorre no Apache (usuario Linux), e o code-server fica com `auth: none`.
 
 Dependencias:
 ```bash
@@ -33,7 +33,6 @@ code-server --version
 
 Gerar config por usuario:
 ```bash
-# Ajuste scripts/code-server-user-bootstrap.R e troque <PASSWORD>
 Rscript scripts/code-server-user-bootstrap.R
 ```
 
@@ -45,8 +44,7 @@ PORTA = UID_LINUX + 8000
 Cada usuario deve ter `~/.config/code-server/config.yaml` com este padrao:
 ```yaml
 bind-addr: 127.0.0.1:<UID+8000>
-auth: password
-password: <PASSWORD_DO_USUARIO>
+auth: none
 cert: false
 base-path: /code/<USUARIO>
 ```
@@ -89,8 +87,16 @@ bob 9002
 
 Apache: habilitar modulos necessarios:
 ```bash
+sudo apt install -y libapache2-mod-authnz-pam
 sudo a2enmod proxy proxy_http proxy_wstunnel rewrite headers ssl
+sudo a2enmod authnz_pam auth_basic
 sudo systemctl reload apache2
+```
+
+Servico PAM do Apache (`/etc/pam.d/apache2`):
+```text
+auth    required  pam_unix.so
+account required  pam_unix.so
 ```
 
 Adicionar no VirtualHost SSL (`/etc/apache2/sites-available/000-default-le-ssl.conf`):
@@ -98,6 +104,16 @@ Adicionar no VirtualHost SSL (`/etc/apache2/sites-available/000-default-le-ssl.c
 # begin code-server hub
 RewriteEngine On
 RewriteMap csusers txt:/etc/apache2/code-server-users.map
+
+# autentica em PAM e garante que /code/<user>/ so aceite o proprio user
+<LocationMatch "^/code/(?<user>[^/]+)/">
+    AuthType Basic
+    AuthName "code-server"
+    AuthBasicProvider PAM
+    AuthPAMService apache2
+    Require valid-user
+    Require expr %{REMOTE_USER} == %{env:MATCH_USER}
+</LocationMatch>
 
 # /code/<user> -> /code/<user>/
 RewriteRule ^/code/([^/]+)$ /code/$1/ [R=301,L]
@@ -132,6 +148,12 @@ Testes:
 # Local no servidor (deve responder 200/302)
 curl -I http://127.0.0.1:9001/
 curl -I http://127.0.0.1:9002/
+```
+
+Teste de autorizacao:
+```text
+1) logar como alice e abrir /code/alice/ (deve funcionar)
+2) logar como alice e abrir /code/bob/ (deve retornar 403)
 ```
 
 Abrir no navegador:

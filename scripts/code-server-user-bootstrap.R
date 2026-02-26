@@ -12,25 +12,24 @@ create_rprofile <- function(login) {
   cmd <- system2("chown", args = c("-R",sprintf("%s:%s", login, login), sprintf("/home/%s/.Rprofile", login)), stdout = TRUE, stderr = TRUE)
 }
 
-create_config_file <- function(login, password, id) {
+create_config_file <- function(login, id) {
   filename <- sprintf("/home/%s/.config/code-server", login)
   cmd <- system2("rm", args=c(sprintf("%s/config.yaml", filename)), stdout = TRUE, stderr = TRUE)
   fileConn<-file(sprintf("%s/config.yaml", filename))
   writeLines(c(sprintf("bind-addr: 127.0.0.1:%d", id),
-               "auth: password", 
-               sprintf("password: %s", password), 
+               "auth: none",
                "cert: false",
                sprintf("base-path: /code/%s", login)), fileConn)
   close(fileConn)
 }
 
-create_readme_file <- function(login, password, id) {
+create_readme_file <- function(login, id) {
   hostname <- get_hostname()
   filename <- sprintf("/home/%s/readme-code-server.txt", login)
   cmd <- system2("rm", args=c(filename), stdout = TRUE, stderr = TRUE)
   fileConn<-file(filename)
   writeLines(c(sprintf("url publica: https://%s.instituicao.exemplo/code/%s/", hostname, login),
-               sprintf("code-server password: %s", password),
+               "#login no Apache com usuario/senha Linux (PAM)",
                "#opcional: acesso local por tunel SSH",
                sprintf("ssh -L %d:127.0.0.1:%d %s@%s.instituicao.exemplo", id, id, login, hostname)), fileConn)
   close(fileConn)
@@ -87,10 +86,9 @@ for (login in folders) {
           cmd <- system2("mkdir", args = c(sprintf("/home/%s/.config", login)), stdout = TRUE, stderr = TRUE)
         if (!dir.exists(sprintf("/home/%s/.config/code-server", login)))
           cmd <- system2("mkdir", args = c(sprintf("/home/%s/.config/code-server", login)), stdout = TRUE, stderr = TRUE)
-        password <- "<PASSWORD>"
         port <- id + 8000
-        create_config_file(login, password, port)
-        create_readme_file(login, password, port)
+        create_config_file(login, port)
+        create_readme_file(login, port)
       },
       error=function(cond) {
         message(cond) 
