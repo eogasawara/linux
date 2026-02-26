@@ -34,6 +34,11 @@ create_apache_users_map <- function(entries) {
   cmd <- system2("chmod", args = c("644", filename), stdout = TRUE, stderr = TRUE)
 }
 
+enable_code_server_service <- function(login) {
+  unit <- sprintf("code-server@%s", login)
+  cmd <- system2("systemctl", args = c("enable", "--now", unit), stdout = TRUE, stderr = TRUE)
+}
+
 create_readme_file <- function(login, id) {
   hostname <- get_hostname()
   filename <- sprintf("/home/%s/readme-code-server.txt", login)
@@ -102,6 +107,7 @@ for (login in folders) {
         create_config_file(login, port)
         create_readme_file(login, port)
         users_map_entries <<- c(users_map_entries, sprintf("%s %d", login, port))
+        enable_code_server_service(login)
       },
       error=function(cond) {
         message(cond) 

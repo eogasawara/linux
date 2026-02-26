@@ -31,11 +31,6 @@ bash install.sh
 code-server --version
 ```
 
-Gerar config por usuario:
-```bash
-Rscript scripts/code-server-user-bootstrap.R
-```
-
 Regra de porta por usuario:
 ```text
 PORTA = UID_LINUX + 8000
@@ -67,11 +62,23 @@ RestartSec=3
 WantedBy=multi-user.target
 ```
 
-Ativar servico para cada usuario:
+Recarregar systemd:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now code-server@alice
-sudo systemctl enable --now code-server@bob
+```
+
+Gerar config por usuario e subir servicos:
+```bash
+sudo Rscript scripts/code-server-user-bootstrap.R
+```
+
+Ao executar o script acima (ou `code-server.R`), ele:
+- gera `~/.config/code-server/config.yaml` por usuario
+- habilita e sobe `code-server@<usuario>` para cada usuario processado
+- gera `/etc/apache2/code-server-users.map`
+
+Checagem rapida dos servicos:
+```bash
 sudo systemctl status code-server@alice --no-pager
 sudo systemctl status code-server@bob --no-pager
 ```
