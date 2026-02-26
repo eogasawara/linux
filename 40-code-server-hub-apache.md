@@ -30,6 +30,7 @@ Dependencias:
 
 Instalar code-server:
 ```bash
+yes | rm install.sh
 yes | apt-get install curl
 wget https://code-server.dev/install.sh
 bash install.sh
