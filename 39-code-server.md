@@ -1,4 +1,7 @@
-code-server (via tunel SSH).
+code-server (modo simples via tunel SSH).
+
+Para modo multiusuario publicado no Apache HTTPS (estilo "hub"), veja:
+- `40-code-server-hub-apache.md`
 
 Instalar:
 ```bash
@@ -29,6 +32,12 @@ ssh -L 8081:127.0.0.1:8081 foo@server.instituicao.exemplo
 Iniciar:
 ```bash
 code-server
+```
+
+Opcional (systemd user):
+```bash
+systemctl --user enable --now code-server
+systemctl --user status code-server --no-pager
 ```
 
 Automacao:

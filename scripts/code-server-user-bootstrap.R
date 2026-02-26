@@ -19,7 +19,8 @@ create_config_file <- function(login, password, id) {
   writeLines(c(sprintf("bind-addr: 127.0.0.1:%d", id),
                "auth: password", 
                sprintf("password: %s", password), 
-               "cert: false"), fileConn)
+               "cert: false",
+               sprintf("base-path: /code/%s", login)), fileConn)
   close(fileConn)
 }
 
@@ -28,10 +29,10 @@ create_readme_file <- function(login, password, id) {
   filename <- sprintf("/home/%s/readme-code-server.txt", login)
   cmd <- system2("rm", args=c(filename), stdout = TRUE, stderr = TRUE)
   fileConn<-file(filename)
-  writeLines(c(sprintf("ssh -L %d:127.0.0.1:%d %s@%s.instituicao.exemplo", id, id, login, hostname),
-               "#estabele o tunel entre tua maquina e o servidor na porta indicada",
+  writeLines(c(sprintf("url publica: https://%s.instituicao.exemplo/code/%s/", hostname, login),
                sprintf("code-server password: %s", password),
-               "#uma vez logado, basta rodar code-server e acessa-lo pelo browser"), fileConn)
+               "#opcional: acesso local por tunel SSH",
+               sprintf("ssh -L %d:127.0.0.1:%d %s@%s.instituicao.exemplo", id, id, login, hostname)), fileConn)
   close(fileConn)
   cmd <- system2("chown", args = c("-R",sprintf("%s:%s", login, login), filename), stdout = TRUE, stderr = TRUE)
 }
