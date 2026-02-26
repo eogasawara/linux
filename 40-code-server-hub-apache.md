@@ -127,7 +127,7 @@ sudo usermod -aG shadow www-data
 Adicionar VirtualHost interno em `:9000` (`/etc/apache2/sites-available/code-server-hub-9000.conf`):
 ```apache
 <VirtualHost 127.0.0.1:9000>
-    ServerName <HOST_FQDN>
+    ServerName localhost
 
     RewriteEngine On
     RewriteMap csusers txt:/etc/apache2/code-server-users.map
