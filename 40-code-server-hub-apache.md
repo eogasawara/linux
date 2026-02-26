@@ -77,6 +77,8 @@ sudo systemctl status code-server@bob --no-pager
 ```
 
 Arquivo de mapeamento usuario -> porta em `/etc/apache2/code-server-users.map`:
+- Gerado automaticamente por `code-server.R` ou `scripts/code-server-user-bootstrap.R`.
+- Formato esperado:
 ```text
 # Exemplo:
 # alice UID=1001 -> porta 9001
@@ -163,7 +165,7 @@ https://<host>/code/bob/
 ```
 
 Operacao:
-- Para adicionar usuario novo: obter UID, calcular `porta = UID + 8000`, criar `config.yaml`, subir `code-server@<usuario>`, incluir no `code-server-users.map`, reiniciar Apache.
+- Para adicionar usuario novo: obter UID, calcular `porta = UID + 8000`, criar `config.yaml`, subir `code-server@<usuario>`, atualizar `code-server-users.map` (manual ou reexecutando o script), reiniciar Apache.
 - Se houver erro de assets/rotas, confira `base-path` no `config.yaml` do usuario.
 
 Referencia:

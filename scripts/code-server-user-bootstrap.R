@@ -23,6 +23,17 @@ create_config_file <- function(login, id) {
   close(fileConn)
 }
 
+create_apache_users_map <- function(entries) {
+  filename <- "/etc/apache2/code-server-users.map"
+  fileConn <- file(filename)
+  if (length(entries) > 0) {
+    writeLines(entries, fileConn)
+  }
+  close(fileConn)
+  cmd <- system2("chown", args = c("root:root", filename), stdout = TRUE, stderr = TRUE)
+  cmd <- system2("chmod", args = c("644", filename), stdout = TRUE, stderr = TRUE)
+}
+
 create_readme_file <- function(login, id) {
   hostname <- get_hostname()
   filename <- sprintf("/home/%s/readme-code-server.txt", login)
@@ -77,6 +88,7 @@ setup_rstudio <- function(login) {
 
 folders <- list.dirs(path = "/home", full.names = FALSE, recursive = FALSE)
 folders <- sort(folders)
+users_map_entries <- c()
 for (login in folders) {
   id <- as.integer(system2("id", args = c("-u", login), stdout = TRUE, stderr = TRUE))
   if (!is.na(id)) {
@@ -89,6 +101,7 @@ for (login in folders) {
         port <- id + 8000
         create_config_file(login, port)
         create_readme_file(login, port)
+        users_map_entries <<- c(users_map_entries, sprintf("%s %d", login, port))
       },
       error=function(cond) {
         message(cond) 
@@ -126,3 +139,13 @@ for (login in folders) {
     ) 
   }
 }
+
+result <- tryCatch(
+  {
+    create_apache_users_map(users_map_entries)
+  },
+  error=function(cond) {
+    message(cond)
+    return(NULL)
+  }
+)
