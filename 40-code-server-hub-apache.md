@@ -120,7 +120,6 @@ sudo usermod -aG shadow www-data
 
 Adicionar VirtualHost interno em `:9000` (`/etc/apache2/sites-available/code-server-hub-9000.conf`):
 ```apache
-<IfModule mod_ssl.c>
 <VirtualHost 127.0.0.1:9000>
     ServerName albali.eic.cefet-rj.br
 
@@ -155,13 +154,11 @@ Adicionar VirtualHost interno em `:9000` (`/etc/apache2/sites-available/code-ser
     RequestHeader set X-Forwarded-Proto "https"
     RequestHeader set X-Forwarded-Port "443"
     ProxyTimeout 600
-
-    SSLCertificateFile /etc/letsencrypt/live/albali.eic.cefet-rj.br/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/albali.eic.cefet-rj.br/privkey.pem
-    Include /etc/letsencrypt/options-ssl-apache.conf
 </VirtualHost>
-</IfModule>
 ```
+
+Nota:
+- O VirtualHost interno `127.0.0.1:9000` deve ficar em HTTP (sem SSL). O HTTPS termina no VirtualHost publico `:443`.
 
 No VirtualHost HTTPS publico (`/etc/apache2/sites-available/000-default-le-ssl.conf`), adicionar proxy de subpath:
 ```apache
