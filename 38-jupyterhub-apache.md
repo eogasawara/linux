@@ -14,13 +14,21 @@ Dependencias:
 31-python-venv-pytorch.md
 ```
 
-Instalar pre-requisito Node/npm e proxy do JupyterHub:
+Instalar pre-requisito Node/npm (padrao Ubuntu 24 via apt, sem nvm) e proxy do JupyterHub:
 ```bash
-sudo apt install -y npm
+sudo apt update
+sudo apt install -y nodejs npm
+which node
+which npm
+node -v
 npm -v
 sudo npm install -g configurable-http-proxy
 which configurable-http-proxy
+head -n 1 "$(which configurable-http-proxy)"
 ```
+
+Nota:
+- Em servidor, prefira `node`/`npm` do sistema (`/usr/bin/...`) e evite depender de nvm no usuario root.
 
 Instalar JupyterHub e JupyterLab no venv existente:
 ```bash
