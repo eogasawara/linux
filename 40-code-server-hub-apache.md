@@ -86,6 +86,7 @@ Ao executar o script acima (ou `code-server.R`), ele:
 
 Checagem rapida dos servicos:
 ```bash
+sudo systemctl list-units --type=service | grep 'code-server@'
 sudo systemctl status code-server@<USUARIO1> --no-pager
 sudo systemctl status code-server@<USUARIO2> --no-pager
 ```
