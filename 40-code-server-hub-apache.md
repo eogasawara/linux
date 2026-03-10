@@ -80,6 +80,8 @@ sudo Rscript scripts/code-server-user-bootstrap.R
 ```
 
 Ao executar o script acima (ou `code-server.R`), ele:
+- garante a existencia de um grupo Linux com o nome da maquina
+- inclui cada usuario existente nesse grupo
 - gera `~/.config/code-server/config.yaml` por usuario
 - habilita e sobe `code-server@<usuario>` para cada usuario processado
 - gera `/etc/apache2/code-server-users.map`

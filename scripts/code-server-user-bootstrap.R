@@ -3,6 +3,22 @@ get_public_host <- function() {
   return("<HOST_FQDN>")
 }
 
+get_machine_group <- function() {
+  group <- trimws(system2("hostname", args = c("-s"), stdout = TRUE, stderr = TRUE))
+  if (length(group) == 0 || !nzchar(group[1])) {
+    stop("Nao foi possivel obter o nome da maquina para criar o grupo.")
+  }
+  group[1]
+}
+
+ensure_machine_group <- function(group) {
+  cmd <- system2("groupadd", args = c("-f", group), stdout = TRUE, stderr = TRUE)
+}
+
+ensure_user_in_machine_group <- function(login, group) {
+  cmd <- system2("usermod", args = c("-a", "-G", group, login), stdout = TRUE, stderr = TRUE)
+}
+
 create_rprofile <- function(login) {
   filename <- sprintf("/home/%s/.Rprofile", login)
   fileConn<-file(filename)
@@ -122,9 +138,31 @@ setup_rstudio <- function(login) {
 
 folders <- list.dirs(path = "/home", full.names = FALSE, recursive = FALSE)
 users_map_entries <- c()
+machine_group <- get_machine_group()
+
+result <- tryCatch(
+  {
+    ensure_machine_group(machine_group)
+  },
+  error=function(cond) {
+    message(cond)
+    return(NULL)
+  }
+)
+
 for (login in folders) {
   id <- as.integer(system2("id", args = c("-u", login), stdout = TRUE, stderr = TRUE))
   if (!is.na(id)) {
+    result <- tryCatch(
+      {
+        ensure_user_in_machine_group(login, machine_group)
+      },
+      error=function(cond) {
+        message(cond)
+        return(NULL)
+      }
+    )
+
     result <- tryCatch(
       {    
         if (!dir.exists(sprintf("/home/%s/.config", login)))
