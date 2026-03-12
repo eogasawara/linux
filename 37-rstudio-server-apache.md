@@ -2,6 +2,10 @@ RStudio Server atras do Apache HTTPS.
 
 Dependencias:
 ```bash
+sudo apt update
+sudo apt install tidy
+
+# Necessario para instalar o .deb do RStudio Server.
 yes | apt-get install gdebi-core
 ```
 
