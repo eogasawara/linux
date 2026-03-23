@@ -63,6 +63,7 @@ yes | wajig install ffmpeg
 yes | wajig install libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
 ```
 
+Basic packages:
 ```bash
 #yes | wajig install r-cran-daltoolbox
 #yes | wajig install r-cran-daltoolboxdp
@@ -383,6 +384,11 @@ yes | wajig install r-cran-xopen
 yes | wajig install r-cran-xtable
 yes | wajig install r-cran-zeallot
 yes | wajig install r-cran-zip
+```
+
+Recent packages:
+```bash
+yes | wajig install r-cran-refmanager
 ```
 
 # limpar as pastas de componentes instalados sem aviso
