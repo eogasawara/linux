@@ -21,10 +21,26 @@ ensure_user_in_machine_group <- function(login, group) {
 
 create_rprofile <- function(login) {
   filename <- sprintf("/home/%s/.Rprofile", login)
-  fileConn<-file(filename)
-  writeLines(c("options(save.defaults=list(compressed=TRUE))",
-               "options(save.image.defaults=list(compressed=TRUE))"), fileConn)
-  close(fileConn)
+  managed_patterns <- c(
+    "^options\\(save\\.defaults=list\\(compressed=TRUE\\)\\)$",
+    "^options\\(save\\.image\\.defaults=list\\(compressed=TRUE\\)\\)$",
+    "^Sys\\.setenv\\(RETICULATE_PYTHON = \"/opt/venv/dal/bin/python3\"\\)$"
+  )
+  managed_lines <- c(
+    "options(save.defaults=list(compressed=TRUE))",
+    "options(save.image.defaults=list(compressed=TRUE))",
+    "Sys.setenv(RETICULATE_PYTHON = \"/opt/venv/dal/bin/python3\")"
+  )
+
+  lines <- if (file.exists(filename)) readLines(filename, warn = FALSE) else character()
+  if (length(lines) > 0) {
+    keep <- rep(TRUE, length(lines))
+    for (pattern in managed_patterns) {
+      keep <- keep & !grepl(pattern, lines)
+    }
+    lines <- lines[keep]
+  }
+  writeLines(c(lines, managed_lines), filename)
   cmd <- system2("chown", args = c("-R",sprintf("%s:%s", login, login), sprintf("/home/%s/.Rprofile", login)), stdout = TRUE, stderr = TRUE)
 }
 
