@@ -1,6 +1,7 @@
 Objetivo:
 - Servidor Ubuntu 24.04 LTS para ciencia de dados e producao
 - Apache HTTPS como ponto de entrada publico
+- Docker Engine para servicos conteinerizados
 - RStudio Server atras do Apache (HTTPS + websocket)
 - Tomcat atras do Apache (producao)
 - code-server via tunel SSH
@@ -13,6 +14,7 @@ Ordem:
 
 Portas usadas:
 - Apache HTTPS: 443
+- Docker: socket local `/var/run/docker.sock`
 - RStudio Server: 8787 (localhost)
 - code-server: 8081 (localhost)
 - Jupyter: 8888 (opcional)

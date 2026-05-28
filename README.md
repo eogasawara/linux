@@ -5,6 +5,7 @@ Leia em ordem:
 - 01-base-os-and-users.md
 - 02-security-ssh-keys.md
 - 03-packages-and-updates.md
+- 04-docker-engine.md
 - 05-web-apache-https.md
 - 10-python-basics.md
 - 11-java.md
