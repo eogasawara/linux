@@ -29,9 +29,9 @@ EOF
 apt update
 ```
 
-Instalar Docker Engine, Compose e Buildx:
+Instalar Docker Engine, Compose, Buildx e suporte a Rootless:
 ```bash
-apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras uidmap dbus-user-session
 ```
 
 Habilitar no boot e validar:
@@ -42,38 +42,62 @@ docker run hello-world
 docker compose version
 ```
 
-Uso pelos usuarios:
+Uso pelos usuarios em servidor compartilhado:
 - Por padrao, apenas `root` ou `sudo` podem usar `docker`
-- Para permitir uso sem `sudo`, adicione o usuario ao grupo `docker`
-- Membros do grupo `docker` recebem privilegios equivalentes a `root`; use apenas para usuarios confiaveis
+- Em laboratorio, prefira `Docker Rootless` para usuarios comuns
+- Nao adicione alunos ao grupo `docker`
+- Membros do grupo `docker` recebem privilegios equivalentes a `root`
 
-Criar grupo e adicionar usuarios:
+Recomendacao de seguranca:
+- Use o grupo `docker` apenas para administradores confiaveis
+- Para alunos e usuarios comuns, configure um daemon Rootless por usuario
+
+Pre-requisitos administrativos por usuario:
+- O usuario precisa ter faixas proprias em `/etc/subuid` e `/etc/subgid`
+- Em contas criadas com `adduser`, isso normalmente ja existe
+- Valide com:
 ```bash
-getent group docker >/dev/null || groupadd docker
-usermod -aG docker foo
+grep '^foo:' /etc/subuid
+grep '^foo:' /etc/subgid
 ```
 
-Aplicar a mudanca de grupo:
-- O usuario deve encerrar a sessao SSH e entrar novamente
-- Alternativa no shell atual:
+Configurar Docker Rootless como usuario comum:
 ```bash
-newgrp docker
+dockerd-rootless-setuptool.sh install
+systemctl --user enable --now docker
+docker context ls
+docker info
+```
+
+Para iniciar automaticamente apos reboot, habilite linger uma vez como administrador:
+```bash
+loginctl enable-linger foo
 ```
 
 Teste como usuario comum:
 ```bash
-docker ps
+docker run hello-world
+docker compose version
 docker run --rm alpine:3.22 uname -a
 ```
 
 Arquivos e comandos usuais:
-- Socket do daemon: `/var/run/docker.sock`
-- Unidade systemd: `docker.service`
-- Dados locais: `/var/lib/docker`
+- Rootful socket: `/var/run/docker.sock`
+- Rootless socket: `/run/user/<uid>/docker.sock`
+- Unidade rootful: `docker.service`
+- Unidade rootless: `~/.config/systemd/user/docker.service`
+- Dados rootful: `/var/lib/docker`
+- Dados rootless: `~/.local/share/docker`
 
 Observacao de firewall:
 - Se houver regras locais, prefira ajustes na cadeia `DOCKER-USER`
 
+Limitacoes do modo Rootless:
+- Algumas opcoes avancadas de rede e portas privilegiadas exigem ajustes adicionais
+- O comportamento de firewall e redes bridge difere do daemon rootful
+- Se o objetivo for administracao completa do host ou simulacao fiel de producao, use VM dedicada
+
 Referencias:
 - https://docs.docker.com/engine/install/ubuntu/
 - https://docs.docker.com/engine/install/linux-postinstall/
+- https://docs.docker.com/engine/security/rootless/
