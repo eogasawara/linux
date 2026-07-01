@@ -13,48 +13,53 @@ chmod -R o+rx /opt/venv/dal
 Pacotes comuns (como usuario foo):
 ```bash
 source /opt/venv/dal/bin/activate
-pip install --upgrade pip
+python -m pip install --upgrade pip
 
-pip install jupyter
-pip install notebook
-pip install jupyter-server
-pip install jupyter-client
-pip install ipykernel
-pip install jsonschema
+python -m pip install jupyter
+python -m pip install notebook
+python -m pip install jupyter-server
+python -m pip install jupyter-client
+python -m pip install jupyterlab
+python -m pip install jupyterhub
+python -m pip install ipykernel
+python -m pip install ipywidgets
+python -m pip install jsonschema
 ```
 
 Pacotes de analise de dados (servidor de desenvolvimento):
 ```bash
-pip install numpy
-pip install pandas
-pip install scipy
-pip install matplotlib
-pip install scikit-learn
-pip install scikit-rf
-pip install scikit-build-core
-pip install imbalanced-learn
-pip install arrow
-pip install testresources
+python -m pip install numpy
+python -m pip install pandas
+python -m pip install scipy
+python -m pip install matplotlib
+python -m pip install scikit-learn
+python -m pip install scikit-rf
+python -m pip install scikit-build-core
+python -m pip install imbalanced-learn
+python -m pip install arrow
+python -m pip install testresources
+python -m pip install pyarrow
 ```
 
 Pacotes de aprendizado profundo (servidor de desenvolvimento):
 ```bash
-pip install torch
-pip install torchvision
-pip install torchaudio
-pip install train
-pip install db-dtypes
-pip install early-stopping
-pip install torch-geometric
-pip install pytorch_lightning
-pip install gluonts
-pip install pyreadr
+python -m pip install torch
+python -m pip install torchvision
+python -m pip install torchaudio
+python -m pip install db-dtypes
+python -m pip install torch-geometric
+python -m pip install pytorch_lightning
+python -m pip install gluonts
+python -m pip install tensorflow
+python -m pip install h5py
+python -m pip install toolz
+python -m pip install pyreadr
 ```
 
 Finalizar:
 ```bash
-pip check
-pip list --outdated
+python -m pip check
+python -m pip list --outdated
 deactivate
 
 sudo chown -R foo:$HOSTNAME /opt/venv/dal
