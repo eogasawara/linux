@@ -71,27 +71,41 @@ Motivo:
 - quem entra no grupo `docker` ganha acesso equivalente a `root`
 - neste servidor, isso e proibido para usuarios comuns
 
-## 4. Preparar um usuario para Docker Rootless
+## 4. Preparacao administrativa por usuario
+
+Este passo e executado por voce, como administrador, para cada conta que vai usar Docker Rootless.
 
 Cada usuario precisa ter faixas em `/etc/subuid` e `/etc/subgid`.
 
+Neste documento, use `<login-do-usuario>` como o login real de uma conta ja existente.
+Exemplos:
+- `joao`
+- `maria`
+- `aluno01`
+
 Checar:
 ```bash
-grep '^foo:' /etc/subuid
-grep '^foo:' /etc/subgid
+grep '^<login-do-usuario>:' /etc/subuid
+grep '^<login-do-usuario>:' /etc/subgid
 ```
 
 Se nao existir, criar:
 ```bash
-usermod --add-subuids 100000-165535 --add-subgids 100000-165535 foo
+usermod --add-subuids 100000-165535 --add-subgids 100000-165535 <login-do-usuario>
 ```
 
 Permitir que o servico do usuario suba mesmo sem sessao aberta:
 ```bash
-loginctl enable-linger foo
+loginctl enable-linger <login-do-usuario>
 ```
 
-## 5. Instalacao que cada usuario executa na propria conta
+Resumo deste passo:
+- voce faz isso uma vez para cada conta que tera Docker Rootless
+- o proprio usuario nao roda esses comandos administrativos
+
+## 5. Configuracao que o proprio usuario executa na conta dele
+
+Este passo e executado pelo proprio usuario, sem `sudo`, na sessao da propria conta.
 
 O proprio usuario, sem `sudo`, roda:
 ```bash
@@ -107,6 +121,10 @@ Se quiser conferir:
 docker info
 docker context ls
 ```
+
+Resumo deste passo:
+- cada usuario roda esses comandos uma vez na propria conta
+- isso cria e habilita o daemon rootless daquele usuario
 
 ## 6. Como o usuario usa no dia a dia
 
