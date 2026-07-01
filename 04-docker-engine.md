@@ -102,10 +102,28 @@ loginctl enable-linger <login-do-usuario>
 Resumo deste passo:
 - voce faz isso uma vez para cada conta que tera Docker Rootless
 - o proprio usuario nao roda esses comandos administrativos
+- se `dbus-user-session` ainda nao tiver sido instalado no host, volte ao passo 1
 
 ## 5. Configuracao que o proprio usuario executa na conta dele
 
 Este passo e executado pelo proprio usuario, sem `sudo`, na sessao da propria conta.
+Nao use `su`, `sudo -iu` ou equivalente para este passo.
+Entre diretamente na conta do usuario, por exemplo via `ssh <login-do-usuario>@<host>`.
+
+Antes de instalar, confira se a sessao do usuario tem `systemd --user` ativo:
+```bash
+echo $XDG_RUNTIME_DIR
+systemctl --user status
+```
+
+O esperado e:
+- `XDG_RUNTIME_DIR` apontando para `/run/user/<uid>`
+- `systemctl --user` funcionando sem erro
+
+Se isso nao acontecer:
+- saia da sessao atual
+- entre diretamente na conta do usuario por SSH ou console
+- nao continue com instalacao manual em `~/.docker/run` como padrao
 
 O proprio usuario, sem `sudo`, roda:
 ```bash
@@ -125,6 +143,7 @@ docker context ls
 Resumo deste passo:
 - cada usuario roda esses comandos uma vez na propria conta
 - isso cria e habilita o daemon rootless daquele usuario
+- o socket esperado do rootless fica em `/run/user/<uid>/docker.sock`
 
 ## 6. Como o usuario usa no dia a dia
 
