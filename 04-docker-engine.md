@@ -1,18 +1,24 @@
 Docker Engine no Ubuntu 24.04 LTS.
 
-Quando usar:
-- Para empacotar aplicacoes e servicos em containers
-- Para executar stacks com `docker compose`
+Objetivo:
+- Instalar Docker de forma previsivel
+- Permitir uso por usuarios sem `sudo`
+- Nao colocar usuarios no grupo `docker`
 
-Remover pacotes conflitantes:
-```bash
-for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do
-  apt remove -y $pkg
-done
-```
+Politica deste servidor:
+- So o administrador usa Docker com privilegio de host
+- Usuarios comuns nao entram no grupo `docker`
+- Usuarios comuns usam `Docker Rootless`
 
-Preparar repositorio oficial do Docker:
+Por que isso importa:
+- O grupo `docker` equivale, na pratica, a acesso de administrador da maquina
+- Em servidor compartilhado, isso nao e aceitavel
+
+## 1. Instalar Docker no host
+
+Usar o repositorio oficial do Docker:
 ```bash
+apt remove -y docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc
 apt update
 apt install -y ca-certificates curl
 install -m 0755 -d /etc/apt/keyrings
@@ -29,73 +35,119 @@ EOF
 apt update
 ```
 
-Instalar Docker Engine, Compose, Buildx e suporte a Rootless:
+Instalar o minimo para:
+- administrador usar Docker no host
+- usuarios usarem `Docker Rootless`
+
 ```bash
-apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras uidmap dbus-user-session
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+apt install -y docker-ce-rootless-extras uidmap dbus-user-session
 ```
 
-Habilitar no boot e validar:
+Validar:
 ```bash
-systemctl enable --now docker
-systemctl status docker --no-pager
-docker run hello-world
+docker --version
 docker compose version
 ```
 
-Uso pelos usuarios em servidor compartilhado:
-- Por padrao, apenas `root` ou `sudo` podem usar `docker`
-- Em laboratorio, prefira `Docker Rootless` para usuarios comuns
-- Nao adicione alunos ao grupo `docker`
-- Membros do grupo `docker` recebem privilegios equivalentes a `root`
+## 2. Decidir se o daemon rootful vai ficar ativo
 
-Recomendacao de seguranca:
-- Use o grupo `docker` apenas para administradores confiaveis
-- Para alunos e usuarios comuns, configure um daemon Rootless por usuario
+Se voce, administrador, tambem vai usar Docker no host:
+```bash
+systemctl enable --now docker
+sudo docker run hello-world
+```
 
-Pre-requisitos administrativos por usuario:
-- O usuario precisa ter faixas proprias em `/etc/subuid` e `/etc/subgid`
-- Em contas criadas com `adduser`, isso normalmente ja existe
-- Valide com:
+Se os usuarios vao usar apenas `Docker Rootless` e voce nao precisa do daemon rootful ligado o tempo todo:
+- nao e obrigatorio habilitar `docker.service`
+
+Observacao:
+- `Docker Rootless` usa um daemon por usuario
+- ele nao depende do socket global `/var/run/docker.sock`
+
+## 3. Nao usar o grupo `docker`
+
+Motivo:
+- quem entra no grupo `docker` ganha acesso equivalente a `root`
+- neste servidor, isso e proibido para usuarios comuns
+
+## 4. Preparar um usuario para Docker Rootless
+
+Cada usuario precisa ter faixas em `/etc/subuid` e `/etc/subgid`.
+
+Checar:
 ```bash
 grep '^foo:' /etc/subuid
 grep '^foo:' /etc/subgid
 ```
 
-Configurar Docker Rootless como usuario comum:
+Se nao existir, criar:
 ```bash
-dockerd-rootless-setuptool.sh install
-systemctl --user enable --now docker
-docker context ls
-docker info
+usermod --add-subuids 100000-165535 --add-subgids 100000-165535 foo
 ```
 
-Para iniciar automaticamente apos reboot, habilite linger uma vez como administrador:
+Permitir que o servico do usuario suba mesmo sem sessao aberta:
 ```bash
 loginctl enable-linger foo
 ```
 
-Teste como usuario comum:
+## 5. Instalacao que cada usuario executa na propria conta
+
+O proprio usuario, sem `sudo`, roda:
 ```bash
+dockerd-rootless-setuptool.sh install
+systemctl --user enable --now docker
+docker context use rootless
 docker run hello-world
 docker compose version
-docker run --rm alpine:3.22 uname -a
 ```
 
-Arquivos e comandos usuais:
-- Rootful socket: `/var/run/docker.sock`
-- Rootless socket: `/run/user/<uid>/docker.sock`
-- Unidade rootful: `docker.service`
-- Unidade rootless: `~/.config/systemd/user/docker.service`
-- Dados rootful: `/var/lib/docker`
-- Dados rootless: `~/.local/share/docker`
+Se quiser conferir:
+```bash
+docker info
+docker context ls
+```
 
-Observacao de firewall:
-- Se houver regras locais, prefira ajustes na cadeia `DOCKER-USER`
+## 6. Como o usuario usa no dia a dia
 
-Limitacoes do modo Rootless:
-- Algumas opcoes avancadas de rede e portas privilegiadas exigem ajustes adicionais
-- O comportamento de firewall e redes bridge difere do daemon rootful
-- Se o objetivo for administracao completa do host ou simulacao fiel de producao, use VM dedicada
+Exemplos:
+```bash
+docker ps
+docker compose up -d
+docker compose logs -f
+docker compose down
+```
+
+Exemplo minimo com `compose.yaml`:
+```yaml
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+```
+
+Subir:
+```bash
+docker compose up -d
+```
+
+## 7. Limitacoes importantes do Rootless
+
+Antes de adotar, saiba:
+- portas abaixo de `1024` normalmente exigem ajuste extra
+- algumas opcoes de rede funcionam diferente do modo rootful
+- o comportamento de firewall tambem pode diferir
+
+Para laboratorio e servidor compartilhado, isso costuma ser aceitavel.
+
+## Resumo pratico
+
+Neste servidor, a regra e:
+- so o administrador controla o Docker do host
+- usuarios comuns nao usam `sudo`
+- usuarios comuns nao entram no grupo `docker`
+- usuarios comuns usam `Docker Rootless`
 
 Referencias:
 - https://docs.docker.com/engine/install/ubuntu/
