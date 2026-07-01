@@ -108,7 +108,15 @@ Resumo deste passo:
 
 Este passo e executado pelo proprio usuario, sem `sudo`, na sessao da propria conta.
 Nao use `su`, `sudo -iu` ou equivalente para este passo.
-Entre diretamente na conta do usuario, por exemplo via `ssh <login-do-usuario>@<host>`.
+Entre diretamente na conta do usuario, por exemplo:
+```bash
+ssh <login-do-usuario>@<maquina>
+```
+
+Nao use terminal do RStudio/Posit para este passo.
+Motivo:
+- esse terminal pode nao criar a sessao com `XDG_RUNTIME_DIR`
+- sem `XDG_RUNTIME_DIR`, o `Docker Rootless` cai em modo manual e o `systemctl --user` pode nao funcionar
 
 Antes de instalar, confira se a sessao do usuario tem `systemd --user` ativo:
 ```bash
@@ -133,6 +141,20 @@ docker context use rootless
 docker run hello-world
 docker compose version
 ```
+
+Se o usuario tentou instalar antes sem `systemd --user` e aparecer erro com socket em `~/.docker/run/docker.sock`:
+```bash
+unset DOCKER_HOST
+docker context use default
+docker context rm rootless
+dockerd-rootless-setuptool.sh install
+systemctl --user enable --now docker
+docker context use rootless
+docker info
+```
+
+Depois disso, o socket correto deve ser algo como:
+- `/run/user/<uid>/docker.sock`
 
 Se quiser conferir:
 ```bash
