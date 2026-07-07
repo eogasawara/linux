@@ -39,6 +39,13 @@ nvidia-smi
 
 Adicionar repositorio do CUDA somente se o toolkit estiver faltando:
 ```bash
+rm -f /etc/apt/sources.list.d/cuda-ubuntu*.list
+rm -f /usr/share/keyrings/cuda-archive-keyring.gpg
+apt update
+```
+
+Adicionar repositorio do CUDA:
+```bash
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
 dpkg -i cuda-keyring_1.1-1_all.deb
 apt update
