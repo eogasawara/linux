@@ -59,27 +59,31 @@ apt update
 
 Instalar toolkit CUDA:
 ```bash
-apt install -y cuda-toolkit-13
-```
-
-Padrao recomendado para Ubuntu LTS:
-- Use `cuda-toolkit-13`.
-- Isso permite atualizacoes dentro da serie 13.x sem saltar automaticamente para uma serie futura.
-
-Opcao mais conservadora para maquinas que executam `apt update` e `apt upgrade` com frequencia:
-```bash
 apt install -y cuda-toolkit-13-3
 ```
 
+Padrao recomendado para Ubuntu LTS:
+- Use `cuda-toolkit-13-3` quando quiser fixar a release do toolkit.
+- Use `cuda-toolkit` somente se quiser acompanhar automaticamente a release mais nova publicada no repositorio.
+
 Observacao:
 - `cuda-toolkit` acompanha novas releases automaticamente.
-- `cuda-toolkit-13` e o default recomendado para Ubuntu LTS.
-- `cuda-toolkit-13` limita upgrades a serie 13.x.
 - `cuda-toolkit-13-3` fixa a release 13.3.x.
 - So considere migrar para `cuda-toolkit-14` quando o PyTorch estavel e o restante do stack suportarem oficialmente a nova serie.
 
 Validar compilador CUDA:
 ```bash
+/usr/local/cuda/bin/nvcc --version
+```
+
+Se o binario existir mas `nvcc` ainda nao estiver no shell, configure o ambiente:
+```bash
+cat >/etc/profile.d/cuda.sh <<'EOF'
+export PATH="/usr/local/cuda/bin:$PATH"
+export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+EOF
+
+source /etc/profile.d/cuda.sh
 nvcc --version
 ```
 
