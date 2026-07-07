@@ -102,6 +102,11 @@ source /etc/profile.d/cuda.sh
 nvcc --version
 ```
 
+Instalar monitor de GPU:
+```bash
+apt install -y nvtop
+```
+
 Teste do PyTorch com GPU (no venv):
 ```bash
 source /opt/venv/dal/bin/activate
@@ -114,6 +119,12 @@ if torch.cuda.is_available():
     print("device:", torch.cuda.get_device_name(0))
 PY
 deactivate
+```
+
+Monitorar uso durante os testes:
+```bash
+htop
+nvtop
 ```
 
 Referencias:
