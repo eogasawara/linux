@@ -26,6 +26,10 @@ Interpretacao:
 - Se `nvidia-smi` falhar, corrija/instale o driver NVIDIA antes de seguir.
 - Se `nvcc` ja existir, valide o ambiente e teste o PyTorch.
 
+Cenario desta maquina:
+- Se `nvidia-smi` funcionar e `nvcc` nao existir, nao rode `ubuntu-drivers autoinstall`.
+- Nesse caso, mantenha o driver atual e instale apenas o toolkit CUDA.
+
 Instalar driver NVIDIA somente se necessario:
 ```bash
 ubuntu-drivers autoinstall
@@ -39,20 +43,25 @@ nvidia-smi
 
 Adicionar repositorio do CUDA somente se o toolkit estiver faltando:
 ```bash
-curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/3bf863cc.pub | \
-gpg --dearmor | \
-sudo tee /usr/share/keyrings/cuda-archive-keyring.gpg > /dev/null
-
-echo "deb [signed-by=/usr/share/keyrings/cuda-archive-keyring.gpg] https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/ /" | \
-sudo tee /etc/apt/sources.list.d/cuda-ubuntu2404.list
-
-sudo apt update
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+dpkg -i cuda-keyring_1.1-1_all.deb
+apt update
 ```
 
 Instalar toolkit CUDA:
 ```bash
-apt install -y cuda-toolkit
+apt install -y cuda-toolkit-13
 ```
+
+Opcao mais estavel para maquinas que executam `apt update` e `apt upgrade` com frequencia:
+```bash
+apt install -y cuda-toolkit-13-3
+```
+
+Observacao:
+- `cuda-toolkit` acompanha novas releases automaticamente.
+- `cuda-toolkit-13` limita upgrades a serie 13.x.
+- `cuda-toolkit-13-3` fixa a release 13.3.x.
 
 Validar compilador CUDA:
 ```bash
