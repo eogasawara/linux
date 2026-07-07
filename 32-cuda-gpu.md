@@ -49,15 +49,21 @@ Instalar toolkit CUDA:
 apt install -y cuda-toolkit-13
 ```
 
-Opcao mais estavel para maquinas que executam `apt update` e `apt upgrade` com frequencia:
+Padrao recomendado para Ubuntu LTS:
+- Use `cuda-toolkit-13`.
+- Isso permite atualizacoes dentro da serie 13.x sem saltar automaticamente para uma serie futura.
+
+Opcao mais conservadora para maquinas que executam `apt update` e `apt upgrade` com frequencia:
 ```bash
 apt install -y cuda-toolkit-13-3
 ```
 
 Observacao:
 - `cuda-toolkit` acompanha novas releases automaticamente.
+- `cuda-toolkit-13` e o default recomendado para Ubuntu LTS.
 - `cuda-toolkit-13` limita upgrades a serie 13.x.
 - `cuda-toolkit-13-3` fixa a release 13.3.x.
+- So considere migrar para `cuda-toolkit-14` quando o PyTorch estavel e o restante do stack suportarem oficialmente a nova serie.
 
 Validar compilador CUDA:
 ```bash
