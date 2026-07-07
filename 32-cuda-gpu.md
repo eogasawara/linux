@@ -21,16 +21,12 @@ nvcc --version
 ubuntu-drivers devices
 ```
 
-Interpretacao:
-- Se `nvidia-smi` funcionar e `nvcc` nao existir, instale apenas o CUDA toolkit.
-- Se `nvidia-smi` falhar, corrija/instale o driver NVIDIA antes de seguir.
-- Se `nvcc` ja existir, valide o ambiente e teste o PyTorch.
+Decisao:
+- Se `nvidia-smi` falhar, rode o bloco "Instalar driver NVIDIA" e depois reinicie.
+- Se `nvidia-smi` funcionar e `nvcc` nao existir, pule o bloco "Instalar driver NVIDIA" e rode o bloco "Instalar toolkit CUDA".
+- Se `nvidia-smi` funcionar e `nvcc` ja existir, pule para "Variaveis de ambiente".
 
-Cenario desta maquina:
-- Se `nvidia-smi` funcionar e `nvcc` nao existir, nao rode `ubuntu-drivers autoinstall`.
-- Nesse caso, mantenha o driver atual e instale apenas o toolkit CUDA.
-
-Instalar driver NVIDIA somente se necessario:
+Instalar driver NVIDIA:
 ```bash
 ubuntu-drivers autoinstall
 reboot
