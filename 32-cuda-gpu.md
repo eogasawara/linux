@@ -37,6 +37,13 @@ Validar driver apos reboot:
 nvidia-smi
 ```
 
+Se o driver estiver instalado, mas `nvidia-smi` falhar e o modulo `nvidia` nao carregar:
+- Verifique se a maquina esta com `Secure Boot` habilitado.
+- Sintoma comum: `modprobe nvidia` falha com erro de chave rejeitada.
+- Solucoes:
+  - desabilitar `Secure Boot` na BIOS/UEFI; ou
+  - registrar a chave MOK e concluir o enrollment no boot.
+
 Adicionar repositorio do CUDA:
 ```bash
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
